@@ -5,11 +5,12 @@ The server runs on the Mac where Spark Desktop runs: the `spark` CLI is a thin c
 ## Install
 
 ```bash
-go install github.com/vaxann/spark-mcp/cmd/spark-mcp@latest   # or: make install  (to ~/.local/bin)
-spark-mcp -check
+curl -fsSL https://raw.githubusercontent.com/vaxann/spark-mcp/main/install.sh | bash                   # binary only
+curl -fsSL https://raw.githubusercontent.com/vaxann/spark-mcp/main/install.sh | bash -s -- --service    # + LaunchAgent over HTTP
+~/.local/bin/spark-mcp -check
 ```
 
-`-check` prints the CLI version and the tools Spark currently allows. If it fails with `spark_unavailable`, start Spark Desktop and enable the CLI (*Settings → AI Agents → Spark CLI Setup*).
+The [README](../README.md#installation) walks through preparing Spark, the service, Cloudflare Tunnel and the Claude apps. `-check` prints the CLI version and the tools Spark currently allows; if it fails with `spark_unavailable`, start Spark Desktop and enable the CLI (*Settings → AI Agents → Spark CLI Setup*).
 
 ## Same Mac: stdio
 
@@ -33,18 +34,11 @@ Over stdio `draft` and `comment` also accept `attach` with absolute local paths.
 
 ## Long-running instance: LaunchAgent + HTTP
 
-```bash
-cp deploy/launchd/spark-mcp.plist deploy/launchd/spark-mcp.local.plist   # git-ignored
-# edit: SPARK_MCP_HTTP_TOKEN (openssl rand -hex 32), SPARK_MCP_OAUTH_PASSWORD (openssl rand -base64 18),
-#       SPARK_MCP_HTTP_LISTEN (keep 127.0.0.1:8766 when the tunnel runs on this Mac), SPARK_MCP_PUBLIC_URL
-make install-agent
-curl -fsS http://127.0.0.1:8766/healthz
-tail -f ~/Library/Logs/spark-mcp/spark-mcp.log
-```
+`install.sh --service` writes `~/Library/LaunchAgents/io.github.vaxann.spark-mcp.plist` (mode `0600`) with a generated token and OAuth password, listens on `127.0.0.1:8766` and starts the agent; re-running upgrades and keeps secrets, `--rotate-secrets` replaces them, `--uninstall` removes everything but the state directory.
 
 The agent runs in your user session (a LaunchDaemon could not reach Spark Desktop), restarts on failure and starts at login. The Mac must be awake and Spark Desktop running for tools to work; while Spark is unreachable the tool list is empty and fills in on the next request once Spark answers.
 
-Rotate the token or password by editing the local plist and running `make install-agent` again. `make uninstall-agent` removes the agent.
+For development, `make install-agent` installs the working tree build with settings from `deploy/launchd/spark-mcp.local.plist` (a git-ignored copy of `deploy/launchd/spark-mcp.plist`).
 
 ### Ports and paths
 

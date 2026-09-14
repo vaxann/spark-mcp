@@ -32,6 +32,8 @@ jobs:
       - uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+      - name: shellcheck install.sh
+        run: shellcheck install.sh testdata/fake-spark
   vuln:
     runs-on: ubuntu-latest
     steps:

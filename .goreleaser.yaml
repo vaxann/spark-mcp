@@ -16,6 +16,8 @@ builds:
 archives:
   - id: default
     formats: [tar.gz]
+    # Version-free names keep releases/latest/download/<asset> stable for install.sh.
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     files: [LICENSE, NOTICE, README.md, config.example.yaml, deploy/launchd/spark-mcp.plist]
 
 checksum:

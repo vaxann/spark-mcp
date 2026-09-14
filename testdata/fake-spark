@@ -5,7 +5,7 @@
 #   FAKE_SPARK_CATALOG  catalog JSON printed by `spark tools`
 set -u
 dir="${FAKE_SPARK_DIR:?}"
-n=$(($(ls "$dir"/stdin-* 2>/dev/null | wc -l) + 1))
+n=$(($(find "$dir" -name 'stdin-*' | wc -l) + 1))
 {
   printf 'agent=%s' "${AI_AGENT:-}"
   for a in "$@"; do printf '\x1f%s' "$a"; done
