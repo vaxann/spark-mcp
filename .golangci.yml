@@ -1,0 +1,23 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - misspell
+    - gosec
+  settings:
+    gosec:
+      excludes:
+        - G204 # the spark CLI is invoked by design, without a shell, with an argument vector
+        - G304 # local attach paths are only honoured over stdio, where the client already runs on this machine
+        - G107 # tests request URLs built from httptest servers
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -1,0 +1,32 @@
+# Binaries and build output
+/bin/
+/dist/
+/spark-mcp
+*.exe
+*.test
+*.out
+coverage.*
+
+# Local configuration and secrets (never commit tokens, real addresses or paths)
+.env
+.env.*
+!.env.example
+config.yaml
+config.local.yaml
+*.local.yaml
+deploy/launchd/*.local.plist
+
+# Local, non-English working notes (not part of the public repository)
+*.ru.md
+/.local/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# OpenSpec local working views
+openspec/.worksets/
+
+# Claude Code local settings
+.claude/settings.local.json

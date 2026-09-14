@@ -1,0 +1,10 @@
+spark-mcp
+Copyright (c) 2026 Ivan Abramenko. Licensed under the MIT License (see LICENSE).
+
+The catalog-driven tool mapping, the attachment content handling and the
+attachment streaming for drafts and comments follow the behaviour of the
+official "Spark for Claude" extension (https://github.com/readdle/spark-claude-extension),
+Copyright (c) Spark Mail Limited, released under the MIT License.
+
+Spark and Spark Desktop are products of Spark Mail Limited. This project is not
+affiliated with or endorsed by Spark Mail Limited.

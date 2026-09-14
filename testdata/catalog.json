@@ -1,0 +1,33 @@
+{"instructions":"Synthetic Spark instructions for tests.","tools":[
+{"command":"accounts","name":"accounts","title":"Accounts","description":"List accounts.","parameters":[]},
+{"command":"emails","name":"emails","title":"Emails","description":"List emails.","parameters":[
+  {"name":"folder","type":"string","required":false,"description":"Folder"},
+  {"name":"filter","flag":"--filter","type":"string","required":false},
+  {"name":"page","flag":"--page","type":"integer","required":false},
+  {"name":"new_senders","flag":"--new-senders","type":"boolean","required":false}]},
+{"command":"thread","name":"thread","title":"Thread","description":"Read a thread.","parameters":[
+  {"name":"message_id","type":"string","required":true},
+  {"name":"download_attachments","flag":"--download-attachments","type":"boolean","required":false}]},
+{"command":"attachment","name":"attachment","title":"Attachment","description":"Read an attachment.","parameters":[
+  {"name":"id","type":"integer","required":true}]},
+{"command":"action","name":"action","title":"Action","description":"Act on emails.","parameters":[
+  {"name":"action_name","type":"string","required":true},
+  {"name":"message_ids","type":"array","items":{"type":"string"},"required":true},
+  {"name":"user","flag":"--user","type":"array","items":{"type":"string"},"required":false}]},
+{"command":"draft","name":"draft","title":"Draft","description":"Create or edit a draft.","parameters":[
+  {"name":"mode","type":"string","required":false},
+  {"name":"to","flag":"--to","type":"array","items":{"type":"string"},"required":false},
+  {"name":"subject","flag":"--subject","type":"string","required":false},
+  {"name":"body","flag":"--body","type":"string","required":false},
+  {"name":"edit","flag":"--edit","type":"string","required":false},
+  {"name":"delete","flag":"--delete","type":"string","required":false},
+  {"name":"attach","flag":"--attach","type":"array","items":{"type":"string"},"required":false},
+  {"name":"unshare","flag":"--unshare","type":"boolean","required":false}]},
+{"command":"comment","name":"comment","title":"Comment","description":"Comment on a thread.","parameters":[
+  {"name":"message_id","type":"string","required":false},
+  {"name":"body","flag":"--body","type":"string","required":false},
+  {"name":"team","flag":"--team","type":"string","required":false},
+  {"name":"user","flag":"--user","type":"array","items":{"type":"string"},"required":false},
+  {"name":"attach","flag":"--attach","type":"array","items":{"type":"string"},"required":false},
+  {"name":"edit","flag":"--edit","type":"string","required":false}]}
+]}

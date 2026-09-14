@@ -1,0 +1,44 @@
+# Example configuration for spark-mcp.
+# Copy to config.yaml (git-ignored) or set the equivalent SPARK_MCP_* environment
+# variables. Environment variables take precedence over this file.
+
+spark:
+  # Absolute path of the spark CLI (Spark Desktop > Settings > AI Agents > Spark CLI Setup).
+  bin: /usr/local/bin/spark
+  timeout: 60s
+  # Attachment calls may wait for an IMAP download (the CLI gives up after 90 s).
+  attachment_timeout: 120s
+  # CLI processes allowed at once.
+  concurrency: 4
+  # Text output beyond this is truncated.
+  max_output: 10MB
+  # How often `spark tools` is re-read so tools follow the access levels set in
+  # Spark Desktop. 0 = read once at startup.
+  catalog_refresh: 60s
+  # Reported to Spark's audit log (AI_AGENT) when a client sends no name.
+  agent: spark-mcp
+
+server:
+  log_level: info
+  # OAuth state and the signing key of attachment links (default: ~/Library/Application Support/spark-mcp).
+  state_dir: ""
+  # Largest attachment returned inline by the attachment tool.
+  max_attachment: 10MB
+  # Largest uploaded file (Spark accepts at most 25 MB per file).
+  max_upload: 25MB
+  # Default lifetime of signed download and upload links.
+  link_ttl: 15m
+  http:
+    # Empty = stdio. Set host:port to serve streamable HTTP at /mcp; a token is
+    # then mandatory unless the address is loopback. Prefer SPARK_MCP_HTTP_TOKEN.
+    listen: ""            # e.g. 127.0.0.1:8766
+    token: ""
+    # Optional direct TLS; otherwise terminate TLS in a tunnel or reverse proxy.
+    tls_cert: ""
+    tls_key: ""
+    # OAuth sign-in for apps (Claude connectors): password typed on the sign-in
+    # page (defaults to token), public base URL (derived from request headers
+    # when empty) and the state file (default: <state_dir>/oauth-state.json).
+    oauth_password: ""
+    public_url: ""
+    oauth_state: ""

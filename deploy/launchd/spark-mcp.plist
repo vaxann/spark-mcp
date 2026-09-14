@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent template for a long-running spark-mcp instance.
+  Copy to spark-mcp.local.plist (git-ignored), fill in the values, then run
+  `make install-agent`. __BIN__ and __HOME__ are substituted by the Makefile.
+  It must be a LaunchAgent (user session), not a LaunchDaemon: the spark CLI
+  talks to the Spark Desktop app running in your GUI session.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.github.vaxann.spark-mcp</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__BIN__</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- Keep loopback when a tunnel or reverse proxy runs on this Mac. -->
+    <key>SPARK_MCP_HTTP_LISTEN</key>
+    <string>127.0.0.1:8766</string>
+    <!-- openssl rand -hex 32 -->
+    <key>SPARK_MCP_HTTP_TOKEN</key>
+    <string>REPLACE_WITH_TOKEN</string>
+    <!-- Password typed on the OAuth sign-in page (Claude apps). -->
+    <key>SPARK_MCP_OAUTH_PASSWORD</key>
+    <string>REPLACE_WITH_PASSWORD</string>
+    <!-- Public HTTPS URL, e.g. https://mcp.example.com (optional behind Cloudflare Tunnel). -->
+    <key>SPARK_MCP_PUBLIC_URL</key>
+    <string></string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/spark-mcp/spark-mcp.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/spark-mcp/spark-mcp.log</string>
+</dict>
+</plist>
