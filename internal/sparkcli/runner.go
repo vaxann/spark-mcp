@@ -22,6 +22,10 @@ type Runner struct {
 	Timeout   time.Duration
 	Log       *slog.Logger
 	sem       chan struct{}
+
+	launch     *Launch
+	launchMu   sync.Mutex
+	lastLaunch time.Time
 }
 
 // NewRunner builds a runner allowing concurrency processes at once.
@@ -80,12 +84,11 @@ func SanitizeAgent(name string) string {
 	return name
 }
 
-// Run executes the call. Failures are *Error values.
+// Run executes the call. Failures are *Error values. With auto-launch
+// enabled, a call that fails because Spark Desktop is not running starts the
+// app and is retried once; nothing has happened on the first attempt, so the
+// retry is safe for write commands too.
 func (r *Runner) Run(ctx context.Context, c Call) (*Result, error) {
-	timeout := c.Timeout
-	if timeout <= 0 {
-		timeout = r.Timeout
-	}
 	select {
 	case r.sem <- struct{}{}:
 	case <-ctx.Done():
@@ -93,6 +96,21 @@ func (r *Runner) Run(ctx context.Context, c Call) (*Result, error) {
 	}
 	defer func() { <-r.sem }()
 
+	res, err := r.exec(ctx, c)
+	if err != nil && r.launch != nil && notRunning(err) && ctx.Err() == nil {
+		if r.relaunch(ctx) == nil {
+			return r.exec(ctx, c)
+		}
+	}
+	return res, err
+}
+
+// exec runs one process without touching the semaphore.
+func (r *Runner) exec(ctx context.Context, c Call) (*Result, error) {
+	timeout := c.Timeout
+	if timeout <= 0 {
+		timeout = r.Timeout
+	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	start := time.Now()

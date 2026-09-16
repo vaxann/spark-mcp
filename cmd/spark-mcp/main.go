@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -52,6 +53,13 @@ func run() int {
 	defer stop()
 
 	runner := sparkcli.NewRunner(cfg.Spark.Bin, cfg.Spark.Concurrency, cfg.Spark.Timeout, cfg.Spark.MaxOutputBytes(), log)
+	if cfg.Spark.AutoLaunch {
+		if runtime.GOOS == "darwin" {
+			runner.EnableAutoLaunch(sparkcli.Launch{App: cfg.Spark.App, Wait: cfg.Spark.LaunchWait})
+		} else {
+			log.Warn("spark.auto_launch is only supported on macOS, ignoring")
+		}
+	}
 	if *check {
 		return checkSpark(ctx, runner, cfg.Spark.Agent)
 	}

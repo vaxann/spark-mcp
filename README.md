@@ -139,13 +139,13 @@ claude mcp add --transport http spark https://spark.example.com/mcp --header "Au
 | Sign out every Claude app | `rm ~/Library/Application\ Support/spark-mcp/oauth-state.json` and restart |
 | Uninstall | `curl -fsSL https://raw.githubusercontent.com/vaxann/spark-mcp/main/install.sh \| bash -s -- --uninstall` |
 
-Tools work only while the Mac is awake and Spark Desktop is running. For an always-available server on a Mac that stays plugged in, prevent sleep: *System Settings → Battery/Energy → Options → Prevent automatic sleeping when the display is off*, or `sudo pmset -c sleep 0`. Also add Spark Desktop to *System Settings → General → Login Items*.
+Tools work only while the Mac is awake and Spark Desktop is running. When the app is closed, the server launches it hidden in the background on the next request and retries the call (`spark.auto_launch`, on by default); quitting Spark therefore only pauses the server until the next request. For an always-available server on a Mac that stays plugged in, prevent sleep: *System Settings → Battery/Energy → Options → Prevent automatic sleeping when the display is off*, or `sudo pmset -c sleep 0`. Also add Spark Desktop to *System Settings → General → Login Items* so it is up before the first request.
 
 ## Troubleshooting
 
 | Symptom | Cause and fix |
 |---|---|
-| `spark_unavailable`, or the connector shows no tools | Spark Desktop is closed or its CLI is not enabled. Start Spark; tools appear on the next request. Check with `~/.local/bin/spark-mcp -check`. |
+| `spark_unavailable`, or the connector shows no tools | Spark Desktop could not be launched (see the log) or its CLI is not enabled. Start Spark; tools appear on the next request. Check with `~/.local/bin/spark-mcp -check`. |
 | A write tool is missing | Its access level is off in *Spark → Settings → AI Agents → Spark CLI Access*. The tool list follows within a minute. |
 | `cli_error: … access level …` | That particular account has a lower level than the command needs; raise it in Spark. |
 | `https://…/healthz` returns 502 | The tunnel runs but the service does not: check status and logs above; the tunnel must point to `localhost:8766`. |

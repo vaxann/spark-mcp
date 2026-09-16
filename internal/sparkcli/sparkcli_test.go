@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -227,4 +228,98 @@ func TestOutputHelpers(t *testing.T) {
 	if sparkcli.SafeFileName("...") != "attachment" || sparkcli.SafeFileName("a/b\\c.txt") != "a_b_c.txt" {
 		t.Error("file names")
 	}
+}
+
+func TestAutoLaunch(t *testing.T) {
+	fake := testutil.NewFakeSpark(t)
+	down := filepath.Join(fake.Dir, "down")
+	t.Setenv("FAKE_SPARK_DOWN", down)
+	markDown := func() {
+		if err := os.WriteFile(down, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ctx := context.Background()
+
+	t.Run("launches and retries", func(t *testing.T) {
+		markDown()
+		r := sparkcli.NewRunner(fake.Bin, 2, 3*time.Second, 1<<10, quiet())
+		var opened []string
+		r.EnableAutoLaunch(sparkcli.Launch{App: "Fake Spark", Wait: 5 * time.Second, Open: func(_ context.Context, app string) error {
+			opened = append(opened, app)
+			// The app comes up a moment after being opened.
+			go func() { time.Sleep(300 * time.Millisecond); _ = os.Remove(down) }()
+			return nil
+		}})
+		res, err := r.Run(ctx, sparkcli.Call{Args: []string{"draft", "--", "hello"}, Agent: "claude-ai"})
+		if err != nil || !strings.Contains(res.Text(), "Draft saved") {
+			t.Fatalf("run after launch: %v %v", res, err)
+		}
+		if !reflect.DeepEqual(opened, []string{"Fake Spark"}) {
+			t.Fatalf("opened %v", opened)
+		}
+		calls := fake.Calls(t)
+		if calls[0].Args[0] != "draft" || calls[len(calls)-1].Args[0] != "draft" || calls[len(calls)-1].Agent != "claude-ai" {
+			t.Fatalf("expected the draft call first and last, got %+v", calls)
+		}
+		for _, c := range calls[1 : len(calls)-1] {
+			if c.Args[0] != "accounts" {
+				t.Fatalf("probe must be `accounts`, got %v", c.Args)
+			}
+		}
+	})
+
+	t.Run("launch failure keeps the error and is rate limited", func(t *testing.T) {
+		markDown()
+		r := sparkcli.NewRunner(fake.Bin, 1, 3*time.Second, 1<<10, quiet())
+		opens := 0
+		r.EnableAutoLaunch(sparkcli.Launch{App: "Fake Spark", Wait: time.Second, Open: func(context.Context, string) error {
+			opens++
+			return errors.New("Unable to find application named \"Fake Spark\"")
+		}})
+		for i := 0; i < 3; i++ {
+			_, err := r.Run(ctx, sparkcli.Call{Args: []string{"accounts"}})
+			if codeOf(err) != sparkcli.CodeUnavailable || !strings.Contains(err.Error(), "can't access your Spark Desktop") {
+				t.Fatalf("call %d: %v", i, err)
+			}
+		}
+		if opens != 1 {
+			t.Fatalf("open attempts: %d, want 1 within the launch interval", opens)
+		}
+	})
+
+	t.Run("app never answers", func(t *testing.T) {
+		markDown()
+		r := sparkcli.NewRunner(fake.Bin, 1, 3*time.Second, 1<<10, quiet())
+		r.EnableAutoLaunch(sparkcli.Launch{App: "Fake Spark", Wait: 1500 * time.Millisecond, Open: func(context.Context, string) error { return nil }})
+		start := time.Now()
+		_, err := r.Run(ctx, sparkcli.Call{Args: []string{"accounts"}})
+		if codeOf(err) != sparkcli.CodeUnavailable {
+			t.Fatalf("want unavailable, got %v", err)
+		}
+		if took := time.Since(start); took < 1500*time.Millisecond || took > 5*time.Second {
+			t.Fatalf("waited %v, want about the launch wait", took)
+		}
+	})
+
+	t.Run("disabled runner does not launch", func(t *testing.T) {
+		markDown()
+		r := sparkcli.NewRunner(fake.Bin, 1, 3*time.Second, 1<<10, quiet())
+		before := len(fake.Calls(t))
+		if _, err := r.Run(ctx, sparkcli.Call{Args: []string{"accounts"}}); codeOf(err) != sparkcli.CodeUnavailable {
+			t.Fatalf("want unavailable, got %v", err)
+		}
+		if n := len(fake.Calls(t)) - before; n != 1 {
+			t.Fatalf("%d calls, want exactly one (no probe, no retry)", n)
+		}
+	})
+
+	t.Run("missing binary is not a launch case", func(t *testing.T) {
+		r := sparkcli.NewRunner("/nonexistent/spark", 1, time.Second, 1<<10, quiet())
+		opens := 0
+		r.EnableAutoLaunch(sparkcli.Launch{Open: func(context.Context, string) error { opens++; return nil }})
+		if _, err := r.Run(ctx, sparkcli.Call{Args: []string{"tools"}}); codeOf(err) != sparkcli.CodeUnavailable || opens != 0 {
+			t.Fatalf("missing binary: %v, opens %d", err, opens)
+		}
+	})
 }

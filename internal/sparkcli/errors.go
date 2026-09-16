@@ -14,6 +14,9 @@ import (
 type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+	// notRunning marks an unavailable error caused by the app being closed
+	// (as opposed to a missing binary), the case auto-launch can fix.
+	notRunning bool
 }
 
 func (e *Error) Error() string { return e.Code + ": " + e.Message }
@@ -39,7 +42,7 @@ const (
 )
 
 // unavailableRE recognises CLI messages that mean the app cannot be reached.
-var unavailableRE = regexp.MustCompile(`(?i)(spark desktop (is )?not running|could not connect|couldn't connect|unable to connect|failed to connect|connection refused|launch spark desktop)`)
+var unavailableRE = regexp.MustCompile(`(?i)(spark desktop (is )?not running|can'?t access your spark desktop|cannot access your spark desktop|check that the app is running|could not connect|couldn't connect|unable to connect|failed to connect|connection refused|launch spark desktop)`)
 
 // cliError classifies a non-zero exit.
 func cliError(stdout, stderr string, exit int) *Error {
@@ -52,7 +55,7 @@ func cliError(stdout, stderr string, exit int) *Error {
 	}
 	msg = strings.TrimPrefix(msg, "Error: ")
 	if unavailableRE.MatchString(msg) {
-		return &Error{Code: CodeUnavailable, Message: msg}
+		return &Error{Code: CodeUnavailable, Message: msg, notRunning: true}
 	}
 	return &Error{Code: CodeCLI, Message: msg}
 }

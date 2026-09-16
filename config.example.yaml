@@ -17,6 +17,13 @@ spark:
   catalog_refresh: 60s
   # Reported to Spark's audit log (AI_AGENT) when a client sends no name.
   agent: spark-mcp
+  # Start Spark Desktop when a call fails because the app is closed, then retry
+  # the call once (macOS only). The app opens hidden, in the background.
+  auto_launch: true
+  # Bundle path or name for `open -a`. Empty = the bundle that contains `bin`.
+  app: ""
+  # How long a call waits for the app to answer after launching it.
+  launch_wait: 30s
 
 server:
   log_level: info

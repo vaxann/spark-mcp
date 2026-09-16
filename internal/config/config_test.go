@@ -84,3 +84,32 @@ func TestParseSize(t *testing.T) {
 		}
 	}
 }
+
+func TestAutoLaunch(t *testing.T) {
+	dir := t.TempDir()
+	cfg, err := Load("", envOf(map[string]string{"SPARK_MCP_STATE_DIR": dir}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Spark.AutoLaunch || cfg.Spark.LaunchWait != 30*time.Second || cfg.Spark.App != "" {
+		t.Errorf("defaults: %+v", cfg.Spark)
+	}
+	cfg, err = Load("", envOf(map[string]string{
+		"SPARK_MCP_STATE_DIR":   dir,
+		"SPARK_MCP_AUTO_LAUNCH": "false",
+		"SPARK_MCP_APP":         "/Applications/Example.app",
+		"SPARK_MCP_LAUNCH_WAIT": "5s",
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Spark.AutoLaunch || cfg.Spark.App != "/Applications/Example.app" || cfg.Spark.LaunchWait != 5*time.Second {
+		t.Errorf("env: %+v", cfg.Spark)
+	}
+	if _, err := Load("", envOf(map[string]string{"SPARK_MCP_STATE_DIR": dir, "SPARK_MCP_AUTO_LAUNCH": "maybe"})); err == nil || !strings.Contains(err.Error(), "SPARK_MCP_AUTO_LAUNCH") {
+		t.Errorf("bad bool: %v", err)
+	}
+	if _, err := Load("", envOf(map[string]string{"SPARK_MCP_STATE_DIR": dir, "SPARK_MCP_LAUNCH_WAIT": "0s"})); err == nil || !strings.Contains(err.Error(), "launch_wait") {
+		t.Errorf("zero wait: %v", err)
+	}
+}

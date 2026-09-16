@@ -40,6 +40,15 @@ type Spark struct {
 	// Agent is reported to Spark's audit log (AI_AGENT) when the client did not
 	// announce a name.
 	Agent string `yaml:"agent"`
+	// AutoLaunch starts Spark Desktop when a call fails because the app is not
+	// running, then retries the call once. macOS only.
+	AutoLaunch bool `yaml:"auto_launch"`
+	// App is the bundle path or name given to `open -a`. Empty derives the
+	// bundle from Bin (the CLI lives inside it).
+	App string `yaml:"app"`
+	// LaunchWait bounds how long a call waits for the app to answer after it
+	// was launched.
+	LaunchWait time.Duration `yaml:"launch_wait"`
 }
 
 // Server configures the process itself.
@@ -87,6 +96,8 @@ func Default() Config {
 			MaxOutput:         "10MB",
 			CatalogRefresh:    60 * time.Second,
 			Agent:             "spark-mcp",
+			AutoLaunch:        true,
+			LaunchWait:        30 * time.Second,
 		},
 		Server: Server{
 			LogLevel:      "info",
@@ -136,6 +147,7 @@ func applyEnv(cfg *Config, env func(string) string) error {
 	str("SPARK_MCP_BIN", &cfg.Spark.Bin)
 	str("SPARK_MCP_MAX_OUTPUT", &cfg.Spark.MaxOutput)
 	str("SPARK_MCP_AGENT", &cfg.Spark.Agent)
+	str("SPARK_MCP_APP", &cfg.Spark.App)
 	str("SPARK_MCP_LOG_LEVEL", &cfg.Server.LogLevel)
 	str("SPARK_MCP_STATE_DIR", &cfg.Server.StateDir)
 	str("SPARK_MCP_MAX_ATTACHMENT", &cfg.Server.MaxAttachment)
@@ -161,7 +173,15 @@ func applyEnv(cfg *Config, env func(string) string) error {
 	durEnv("SPARK_MCP_TIMEOUT", &cfg.Spark.Timeout)
 	durEnv("SPARK_MCP_ATTACHMENT_TIMEOUT", &cfg.Spark.AttachmentTimeout)
 	durEnv("SPARK_MCP_CATALOG_REFRESH", &cfg.Spark.CatalogRefresh)
+	durEnv("SPARK_MCP_LAUNCH_WAIT", &cfg.Spark.LaunchWait)
 	durEnv("SPARK_MCP_LINK_TTL", &cfg.Server.LinkTTL)
+	if v := env("SPARK_MCP_AUTO_LAUNCH"); v != "" && err == nil {
+		b, perr := strconv.ParseBool(v)
+		if perr != nil {
+			return fmt.Errorf("SPARK_MCP_AUTO_LAUNCH: %w", perr)
+		}
+		cfg.Spark.AutoLaunch = b
+	}
 	if v := env("SPARK_MCP_CONCURRENCY"); v != "" && err == nil {
 		n, perr := strconv.Atoi(v)
 		if perr != nil {
@@ -185,6 +205,9 @@ func (c Config) Validate() error {
 	}
 	if c.Spark.CatalogRefresh < 0 {
 		return errors.New("spark.catalog_refresh must not be negative")
+	}
+	if c.Spark.AutoLaunch && c.Spark.LaunchWait <= 0 {
+		return errors.New("spark.launch_wait must be positive when spark.auto_launch is on")
 	}
 	for name, v := range map[string]string{"spark.max_output": c.Spark.MaxOutput, "server.max_attachment": c.Server.MaxAttachment, "server.max_upload": c.Server.MaxUpload} {
 		if n, err := ParseSize(v); err != nil || n <= 0 {

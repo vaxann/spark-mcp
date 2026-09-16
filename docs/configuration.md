@@ -13,6 +13,9 @@ Settings come from built-in defaults, then an optional YAML file (`-config path`
 | `SPARK_MCP_MAX_OUTPUT` | `spark.max_output` | `10MB` | Text output beyond this is truncated with a marker. |
 | `SPARK_MCP_CATALOG_REFRESH` | `spark.catalog_refresh` | `60s` | Minimum age before `spark tools` is re-read on `tools/list` or `tools/call`. `0` reads the catalog once. |
 | `SPARK_MCP_AGENT` | `spark.agent` | `spark-mcp` | `AI_AGENT` value for Spark's audit log when a client sends no name (otherwise the client's name is used). |
+| `SPARK_MCP_AUTO_LAUNCH` | `spark.auto_launch` | `true` | When a call fails because Spark Desktop is closed, launch the app hidden in the background (`open -g -j -a`), wait for it to answer and retry the call once. Attempted at most once a minute. macOS only. |
+| `SPARK_MCP_APP` | `spark.app` | derived | Bundle path or name passed to `open -a`. Derived from `spark.bin`, which is a symlink into the bundle. |
+| `SPARK_MCP_LAUNCH_WAIT` | `spark.launch_wait` | `30s` | How long a call waits for the app to answer after launching it. |
 | `SPARK_MCP_LOG_LEVEL` | `server.log_level` | `info` | `debug`, `info`, `warn`, `error`. Logs go to stderr. |
 | `SPARK_MCP_STATE_DIR` | `server.state_dir` | `~/Library/Application Support/spark-mcp` | OAuth state and the HMAC key of signed links (created `0700`, files `0600`). |
 | `SPARK_MCP_MAX_ATTACHMENT` | `server.max_attachment` | `10MB` | Largest attachment returned inline by `attachment`. |
@@ -37,7 +40,7 @@ Tool errors are results with `isError: true`, text `Error (<code>): <message>` a
 
 | Code | Meaning |
 |---|---|
-| `spark_unavailable` | The CLI is missing, Spark Desktop is not running, or the catalog cannot be read. |
+| `spark_unavailable` | The CLI is missing, Spark Desktop is not running (and could not be launched), or the catalog cannot be read. |
 | `cli_error` | Spark rejected the command (unknown ID, insufficient access level, invalid combination); the message is Spark's. |
 | `invalid_argument` | Unknown parameter, wrong type, missing required value, bad base64, local path over a remote connection. |
 | `too_large` | Attachment above `max_attachment`, upload above `max_upload`. |
