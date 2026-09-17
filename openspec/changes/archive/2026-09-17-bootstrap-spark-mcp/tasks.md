@@ -36,5 +36,5 @@
 - [x] 6.1 LaunchAgent template, `make install-agent`/`uninstall-agent`, example config
 - [x] 6.2 README, `docs/clients.md` (stdio, LaunchAgent, token, OAuth connector, Cloudflare Tunnel, attachments), `docs/configuration.md` (options, access control, error codes)
 - [x] 6.3 Publish through the maintainer's tunnel as a LaunchAgent; verify health, OAuth metadata, 401 discovery, token calls, signed links and the full OAuth flow (registration, password, PKCE, token, refresh) from outside
-- [ ] 6.4 Connect a Claude app custom connector
-- [ ] 6.5 Create the public GitHub repository, push, tag the first release
+- [x] 6.4 Connect a Claude app custom connector
+- [x] 6.5 Create the public GitHub repository, push, tag the first release
